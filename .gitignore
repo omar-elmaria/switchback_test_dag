@@ -1,0 +1,12 @@
+/AA Test Design Switchback Testing.xlsx
+/AA Test - Order Volume by Zone and Scheme ID.twb
+/PH Calamba Switchback AA Test Design.xlsx
+/venv_switchback_aa_tests
+__pycache__
+/Switchback Test Configurations.gsheet
+*.ini
+venv_switchback_dag/
+venv_switchback/
+logs/
+plugins/
+*.json
