@@ -7,6 +7,7 @@ __pycache__
 *.ini
 venv_switchback_dag/
 venv_switchback/
+venv_sb/
 logs/
 plugins/
 *.json
