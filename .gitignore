@@ -11,3 +11,4 @@ venv_sb/
 logs/
 plugins/
 *.json
+.env
