@@ -7,6 +7,9 @@ from automated_switchback_test_analysis_script import analysis_script_func
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 from airflow.operators.email import EmailOperator
+from airflow.operators.dummy import DummyOperator
+import os
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/opt/airflow/py_scripts/application_default_credentials.json"
 
 default_args = {
     'owner': 'oelmaria',
@@ -24,6 +27,10 @@ def execute_query_func():
     run_query_func('/opt/airflow/sql_queries/data_extraction_queries_automated_script.sql')
 
 with DAG('switchback_test_dag', schedule_interval = '@daily', default_args = default_args, catchup = False) as dag:
+    dummy_task = DummyOperator(
+        task_id = 'dummy_task'
+    )
+    
     run_queries = PythonOperator(
         task_id = 'run_queries',
         python_callable = execute_query_func
@@ -55,4 +62,4 @@ with DAG('switchback_test_dag', schedule_interval = '@daily', default_args = def
     )
 
     # Set the order of tasks
-    run_queries >> success_msg_task_1 >> run_analysis_script >> success_msg_task_2 >> send_success_email
+    dummy_task >> run_queries >> success_msg_task_1 >> run_analysis_script >> success_msg_task_2 >> send_success_email
