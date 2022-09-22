@@ -138,7 +138,7 @@ def analysis_script_func():
 
         pval_dict = {} # Initialize an empty dict that will contain the p-value of each KPI
         for i in col_list:
-            pval = round(scipy.stats.mannwhitneyu(x = df_on_days[i], y = df_off_days[i], alternative = 'two-sided', nan_policy = 'omit')[1], 4)
+            pval = round(scipy.stats.mannwhitneyu(x = df_on_days[i].dropna(), y = df_off_days[i].dropna(), alternative = 'two-sided')[1], 4)
             pval_dict[i] = pval
         
         df_final_pval.append(pval_dict) # df_final_pval is a list of dicts
