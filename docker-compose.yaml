@@ -63,15 +63,15 @@ x-airflow-common:
     AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
     AIRFLOW__SMTP__SMTP_PORT: 587
     AIRFLOW__SMTP__SMTP_USER: omar.elmaria@deliveryhero.com
-    AIRFLOW__SMTP__SMTP_PASSWORD: bfcvmyjkhrhcrayd # Generated using the steps explained in this blog post --> https://naiveskill.com/send-email-from-airflow/
+    AIRFLOW__SMTP__SMTP_PASSWORD: ${AIRFLOW__SMTP__SMTP_PASSWORD} # Generated using the steps explained in this blog post --> https://naiveskill.com/send-email-from-airflow/
     AIRFLOW__SMTP__SMTP_MAIL_FROM: omar.elmaria@deliveryhero.com
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-    - ./sql_queries:/opt/airflow/sql_queries
-    - ./notebooks:/opt/airflow/notebooks
-    - ./py_scripts:/opt/airflow/py_scripts
+    - G:/My Drive/APAC/Autopricing/Switchback Testing/switchback_test_dag/sql_queries:/opt/airflow/sql_queries
+    - G:/My Drive/APAC/Autopricing/Switchback Testing/switchback_test_dag/notebooks:/opt/airflow/notebooks
+    - G:/My Drive/APAC/Autopricing/Switchback Testing/switchback_test_dag/py_scripts:/opt/airflow/py_scripts
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
