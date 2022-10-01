@@ -11,6 +11,7 @@ An example of that coupling effect is a surge pricing setup in an **online deliv
 
 ## What are Network Effects?
 Network effects can be explained through the infographic below
+
 ![image](https://user-images.githubusercontent.com/98691360/193418293-45709e62-d0f0-4b85-b6e5-2605442e41d4.png)
 
 The problem here is that the fleet would be able to serve customers that paid no surge fees "faster". Why, you might ask? It is because the surge fees paid by the group that was exposed to surge would **indirectly** impact the group that was not subjected to this treatment. Assuming our main success metric is reducing **delivery delays**, the delays associated with the group that did **not** get exposed to surge would be **"polluted"** by the spillover effect from the other group. It doesn't matter how you aggregate the KPIs at the end. The delivery delays of orders placed by the non-surged group would likely be **underestimated** due to the coupling effect caused by the **shared fleet** between the two groups of customers.
@@ -36,6 +37,7 @@ The primary conclusions of the research part of the project were as follows:
 
 The infographic below visualizes what this means (courtesy of this Doordash [article](https://medium.com/@DoorDash/switchback-tests-and-randomized-experimentation-under-network-effects-at-doordash-f1d938ab7c2a))
 ![image](https://user-images.githubusercontent.com/98691360/193418970-a8c9fc90-17b9-41cb-8947-ecf128607d2a.png)
+
 2. The best switchback window size is *1 hour*
 3. The effect of a new pricing setup is typically **_felt_** by the ecosystem of customers and riders **after 1 to 2 hours** from switching to a new pricing configuration
 
