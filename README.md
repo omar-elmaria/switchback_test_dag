@@ -2,7 +2,7 @@
 This repo contains a data pipeline composed of Python and Big Query scripts that extract, clean, and aggregate **switchback test** data, as well as perform statistical 
 significance tests. The code is fully orchestrated on **Airflow** and feeds a **Tableau dashboard** that displays the success metrics of switchback experiments.
 
-# Introduction About Switchback Testing
+# Introduction to Switchback Testing
 **Switchback testing** is an experimentation framework that is used when independence between the variation and control groups cannot be established through the standard
 way of running AB tests (i.e., **splitting traffic evenly** across the number of variants). This happens when the intervention being tested affects part of the ecosystem 
 that is **shared** among the variation and control groups.
