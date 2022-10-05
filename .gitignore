@@ -13,4 +13,4 @@ plugins/
 *.json
 .env
 *.bat
-.twb
+*.twb
