@@ -105,6 +105,8 @@ SELECT
 
     -- Business KPIs (These are the components of profit)
     a.dps_delivery_fee_local,
+    a.dps_surge_fee_local,
+    a.dps_travel_time_fee_local,
     a.delivery_fee_local,
     a.commission_local,
     a.joker_vendor_fee_local,
