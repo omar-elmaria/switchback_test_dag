@@ -4,7 +4,7 @@ DECLARE entity_id_var ARRAY <STRING>;
 SET entity_id_var = ['FP_PH', 'FP_TH'];
 
 -- Step 1: Pull the valid experiment names
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.valid_exp_names_switchback_tests` AS 
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingvalid_exp_names_switchback_tests` AS 
 SELECT DISTINCT
   entity_id,
   country_code,
@@ -21,7 +21,7 @@ WHERE TRUE
 ###----------------------------------------------------------END OF VALID EXP NAMES PART----------------------------------------------------------###
 
 -- Step 2: Extract the vendor IDs per target group along with their associated parent vertical and vertical type
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_target_groups_switchback_tests` AS
 WITH vendor_tg_vertical_mapping_with_dup AS (
   SELECT DISTINCT -- The DISTINCT command is important here
     entity_id,
@@ -52,7 +52,7 @@ WITH vendor_tg_vertical_mapping_with_dup AS (
   LEFT JOIN UNNEST(test_vertical_parents) parent_vertical
   LEFT JOIN UNNEST(schedule.active_days) active_days
   WHERE TRUE 
-    AND test_name IN (SELECT DISTINCT test_name FROM `dh-logistics-product-ops.pricing.valid_exp_names_switchback_tests`)
+    AND test_name IN (SELECT DISTINCT test_name FROM `logistics-data-storage-staging.long_term_pricingvalid_exp_names_switchback_tests`)
 ),
 
 vendor_tg_vertical_mapping_agg AS (
@@ -94,7 +94,7 @@ LEFT JOIN `fulfillment-dwh-production.curated_data_shared_central_dwh.vendors` b
 ORDER BY 1,2,3,4,5;
 
 -- Step 3: Extract the zones that are part of the experiment
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_zone_ids_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_zone_ids_switchback_tests` AS
 SELECT DISTINCT -- The DISTINCT command is important here
     entity_id,
     country_code,
@@ -108,11 +108,11 @@ CROSS JOIN UNNEST(a.zone_ids) AS zone_id
 CROSS JOIN UNNEST(a.matching_vendor_ids) AS vendor_id
 LEFT JOIN UNNEST(test_vertical_parents) parent_vertical
 WHERE TRUE
-  AND test_name IN (SELECT DISTINCT test_name FROM `dh-logistics-product-ops.pricing.valid_exp_names_switchback_tests`)
+  AND test_name IN (SELECT DISTINCT test_name FROM `logistics-data-storage-staging.long_term_pricingvalid_exp_names_switchback_tests`)
 ORDER BY 1,2;
 
 -- Step 4.1: Extract the target groups, variants, and price schemes of the tests
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_tgs_variants_and_schemes_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_tgs_variants_and_schemes_switchback_tests` AS
 SELECT DISTINCT
     entity_id,
     country_code,
@@ -127,22 +127,22 @@ FROM `fulfillment-dwh-production.cl.dps_experiment_setups` a
 CROSS JOIN UNNEST(a.matching_vendor_ids) AS vendor_id
 LEFT JOIN UNNEST(test_vertical_parents) parent_vertical
 WHERE TRUE 
-  AND test_name IN (SELECT DISTINCT test_name FROM `dh-logistics-product-ops.pricing.valid_exp_names_switchback_tests`)
+  AND test_name IN (SELECT DISTINCT test_name FROM `logistics-data-storage-staging.long_term_pricingvalid_exp_names_switchback_tests`)
 ORDER BY 1,2;
 
 -- Step 4.2: Find the distinct combinations of target groups, variants, and price schemes per test
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_agg_tgs_variants_and_schemes_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_agg_tgs_variants_and_schemes_switchback_tests` AS
 SELECT 
   entity_id,
   country_code,
   test_name,
   test_id,
   ARRAY_TO_STRING(ARRAY_AGG(CONCAT(target_group, ' | ', variant, ' | ', price_scheme_id)), ', ') AS tg_var_scheme_concat
-FROM `dh-logistics-product-ops.pricing.ab_test_tgs_variants_and_schemes_switchback_tests`
+FROM `logistics-data-storage-staging.long_term_pricingab_test_tgs_variants_and_schemes_switchback_tests`
 GROUP BY 1,2,3,4;
 
 -- Step 5: Extract the polygon shapes of the experiment's target zones
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_geo_data_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_geo_data_switchback_tests` AS
 SELECT 
     p.entity_id,
     co.country_code,
@@ -159,7 +159,7 @@ FROM `fulfillment-dwh-production.cl.countries` co
 LEFT JOIN UNNEST(co.platforms) p
 LEFT JOIN UNNEST(co.cities) ci
 LEFT JOIN UNNEST(ci.zones) zo
-INNER JOIN `dh-logistics-product-ops.pricing.ab_test_zone_ids_switchback_tests` tgt ON p.entity_id = tgt.entity_id AND co.country_code = tgt.country_code AND zo.id = tgt.zone_id 
+INNER JOIN `logistics-data-storage-staging.long_term_pricingab_test_zone_ids_switchback_tests` tgt ON p.entity_id = tgt.entity_id AND co.country_code = tgt.country_code AND zo.id = tgt.zone_id 
 WHERE TRUE 
     AND zo.is_active -- Active city
     AND ci.is_active; -- Active zone
@@ -167,7 +167,7 @@ WHERE TRUE
 ###----------------------------------------------------------END OF EXP SETUPS PART----------------------------------------------------------###
 
 -- Step 6: Pull the business KPIs from dps_sessions_mapped_to_orders_v2
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_individual_orders_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_switchback_tests` AS
 WITH test_start_and_end_dates AS ( -- Get the start and end dates per test
   SELECT DISTINCT
     entity_id,
@@ -176,7 +176,7 @@ WITH test_start_and_end_dates AS ( -- Get the start and end dates per test
     test_end_date,
     test_name,
     test_id
-  FROM `dh-logistics-product-ops.pricing.ab_test_zone_ids_switchback_tests`
+  FROM `logistics-data-storage-staging.long_term_pricingab_test_zone_ids_switchback_tests`
 ),
 
 entities AS (
@@ -304,13 +304,13 @@ LEFT JOIN `fulfillment-dwh-production.pandata_curated.pd_orders` pd -- Contains 
     AND a.entity_id = pd.global_entity_id
     AND a.platform_order_code = pd.code 
     AND a.created_date = pd.created_date_utc -- There is no country_code field in this table
-LEFT JOIN `dh-logistics-product-ops.pricing.ab_test_geo_data_switchback_tests` zn 
+LEFT JOIN `logistics-data-storage-staging.long_term_pricingab_test_geo_data_switchback_tests` zn 
   ON TRUE 
     AND a.entity_id = zn.entity_id 
     AND a.country_code = zn.country_code
     AND a.zone_id = zn.zone_id 
     AND a.experiment_id = zn.test_id -- Filter for orders in the target zones (combine this JOIN with the condition in the WHERE clause)
-LEFT JOIN `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tests` tg -- Tag the vendors with their target group association
+LEFT JOIN `logistics-data-storage-staging.long_term_pricingab_test_target_groups_switchback_tests` tg -- Tag the vendors with their target group association
   ON TRUE
     AND a.entity_id = tg.entity_id
     AND a.vendor_id = tg.vendor_code 
@@ -325,7 +325,7 @@ LEFT JOIN `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tes
         AND (DATE_DIFF(a.order_placed_at, a.customer_first_order_date, DAY) < tg.days_since_first_order_less_than OR DATE_DIFF(a.order_placed_at, a.customer_first_order_date, DAY) IS NULL)
       END
 LEFT JOIN test_start_and_end_dates dat ON a.entity_id = dat.entity_id AND a.country_code = dat.country_code AND a.experiment_id = dat.test_id
-LEFT JOIN `dh-logistics-product-ops.pricing.ab_test_agg_tgs_variants_and_schemes_switchback_tests` vs -- Get the list of target_group | variation | scheme_id combinations that are relevant to the experiment
+LEFT JOIN `logistics-data-storage-staging.long_term_pricingab_test_agg_tgs_variants_and_schemes_switchback_tests` vs -- Get the list of target_group | variation | scheme_id combinations that are relevant to the experiment
   ON TRUE
     AND a.entity_id = vs.entity_id 
     AND a.country_code = vs.country_code 
@@ -336,7 +336,7 @@ WHERE TRUE
     
     AND CONCAT(a.entity_id, ' | ', a.country_code, ' | ', a.experiment_id, ' | ', a.variant) IN ( -- Filter for the right variants belonging to the experiment (essentially filter out NULL and Original)
       SELECT DISTINCT CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', variant) 
-      FROM `dh-logistics-product-ops.pricing.ab_test_tgs_variants_and_schemes_switchback_tests`
+      FROM `logistics-data-storage-staging.long_term_pricingab_test_tgs_variants_and_schemes_switchback_tests`
       WHERE CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', variant) IS NOT NULL
     )
     
@@ -347,7 +347,7 @@ WHERE TRUE
     AND CONCAT(a.entity_id, ' | ', a.country_code, ' | ', a.experiment_id) IN ( -- Filter for the right entity | experiment_id combos. 
       -- The "ab_test_target_groups_switchback_tests" table was specifically chosen from the tables in steps 2-4 because it automatically eliminates tests where there are no matching vendors
       SELECT DISTINCT CONCAT(entity_id, ' | ', country_code, ' | ', test_id)
-      FROM `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tests`
+      FROM `logistics-data-storage-staging.long_term_pricingab_test_target_groups_switchback_tests`
       WHERE CONCAT(entity_id, ' | ', country_code, ' | ', test_id) IS NOT NULL
     )
     
@@ -356,37 +356,37 @@ WHERE TRUE
 ###----------------------------------------------------------SEPARATOR----------------------------------------------------------###
 
 -- Step 7.1: We did not add the profit metrics and the parent_vertical filter to the previous query because some of the fields used below had to be computed first
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_individual_orders_augmented_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_augmented_switchback_tests` AS
 SELECT
   a.*,
   -- Revenue and profit formulas
   actual_df_paid_by_customer + commission_local + joker_vendor_fee_local + service_fee_local + COALESCE(sof_local_cdwh, sof_local) AS revenue_local,
   actual_df_paid_by_customer + commission_local + joker_vendor_fee_local + service_fee_local + COALESCE(sof_local_cdwh, sof_local) - delivery_costs_local AS gross_profit_local,
 
-FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_switchback_tests` a
+FROM `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_switchback_tests` a
 WHERE TRUE -- Filter for orders from the right parent vertical (restuarants, shop, darkstores, etc.) per experiment
     AND (
       CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', vendor_vertical_parent) IN ( -- If the parent vertical exists, filter for the right one belonging to the experiment
         SELECT DISTINCT CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', first_parent_vertical)
-        FROM `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tests`
+        FROM `logistics-data-storage-staging.long_term_pricingab_test_target_groups_switchback_tests`
         WHERE CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', first_parent_vertical) IS NOT NULL
       )
       OR
       CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', vendor_vertical_parent) IN ( -- If the parent vertical exists, filter for the right one belonging to the experiment
         SELECT DISTINCT CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', second_parent_vertical)
-        FROM `dh-logistics-product-ops.pricing.ab_test_target_groups_switchback_tests`
+        FROM `logistics-data-storage-staging.long_term_pricingab_test_target_groups_switchback_tests`
         WHERE CONCAT(entity_id, ' | ', country_code, ' | ', test_id, ' | ', second_parent_vertical) IS NOT NULL
       )
     );
 
 -- Step 7.2: Get the vendor locations
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.vendor_locations_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingvendor_locations_switchback_tests` AS
 WITH vendor_list AS (
   SELECT DISTINCT
     entity_id,
     test_id,
     vendor_id,
-  FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_augmented_switchback_tests`
+  FROM `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_augmented_switchback_tests`
 )
 
 SELECT
@@ -399,7 +399,7 @@ LEFT JOIN UNNEST(b.zones) zn
 GROUP BY 1,2,3,4;
 
 -- Step 7.3: Append the vendor locations to "ab_test_individual_orders_augmented_switchback_tests"
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_individual_orders_augmented_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_augmented_switchback_tests` AS
 SELECT 
   -- Identifiers and supplementary fields     
     -- Date and time
@@ -428,23 +428,17 @@ SELECT
       created_date_utc, order_placed_at_utc, order_placed_at_local, dow_local, dps_sessionid_created_at_utc, day_num_in_test, even_or_odd_day,
       region, entity_id, country_code, city_name, city_id, zone_name, zone_id, zone_shape, customer_location
     )
-FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_augmented_switchback_tests` a
-LEFT JOIN `dh-logistics-product-ops.pricing.vendor_locations_switchback_tests` b USING (entity_id, test_id, vendor_id);
+FROM `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_augmented_switchback_tests` a
+LEFT JOIN `logistics-data-storage-staging.long_term_pricingvendor_locations_switchback_tests` b USING (entity_id, test_id, vendor_id);
 
 ###----------------------------------------------------------END OF RAW ORDERS EXTRACTION PART----------------------------------------------------------###
 
 -- Step 8: Clean the orders data by filtering for records where keep_drop_flag = 'Keep' (refer to the code above to see how this field was constructed)
-CREATE OR REPLACE TABLE `dh-logistics-product-ops.pricing.ab_test_individual_orders_cleaned_staging_switchback_tests` AS
+CREATE OR REPLACE TABLE `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_cleaned_staging_switchback_tests` AS
 SELECT
     *
-FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_augmented_switchback_tests`
+FROM `logistics-data-storage-staging.long_term_pricingab_test_individual_orders_augmented_switchback_tests`
 WHERE TRUE
     AND keep_drop_flag = 'Keep'; -- Filter for the orders that have the correct target_group, variant, and scheme ID based on the configuration of the experiment
 
 ###----------------------------------------------------------END OF CLEAN ORDERS EXTRACTION PART----------------------------------------------------------###
-
--- Step 9: Append new rows to the final table that is used in the dashboard and Py script (`dh-logistics-product-ops.pricing.ab_test_individual_orders_cleaned_switchback_tests`)
-INSERT `dh-logistics-product-ops.pricing.ab_test_individual_orders_cleaned_switchback_tests`
-SELECT *
-FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_cleaned_staging_switchback_tests`
-WHERE created_date_utc > (SELECT MAX(created_date_utc) FROM `dh-logistics-product-ops.pricing.ab_test_individual_orders_cleaned_switchback_tests`) -- SELECT ALL records from the staging table that have a created_date > MAX(created_date) in the table used in the dashboard and Py script
