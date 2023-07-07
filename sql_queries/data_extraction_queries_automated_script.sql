@@ -341,6 +341,8 @@ WHERE TRUE
     )
     
     AND a.delivery_status = 'completed' -- Successful orders
+
+    AND a.is_match_experiment_vertical
     
     AND CONCAT(a.entity_id, ' | ', a.country_code, ' | ', a.experiment_id) IN ( -- Filter for the right entity | experiment_id combos. 
       -- The "ab_test_target_groups_switchback_tests" table was specifically chosen from the tables in steps 2-4 because it automatically eliminates tests where there are no matching vendors
